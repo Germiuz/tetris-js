@@ -83,11 +83,17 @@ class Block {
     }
 }
 
+type GameState = 'Init' | 'Started' | 'Over';
+
 export class GameFieldState {
     private cells: number[][] = [];
 
     private readonly _rows: number;
     private readonly _cols: number;
+
+    private _score: number = 0;
+
+    private _state: GameState = 'Init';
 
     private currentBlock?: {
         block: Block;
@@ -101,7 +107,7 @@ export class GameFieldState {
         this._rows = rows;
         this._cols = cols;
 
-        this.cells = getEmptyMatrix(rows, cols);
+        this.initField();
     }
 
     get rows(): number {
@@ -111,8 +117,77 @@ export class GameFieldState {
         return this._cols;
     }
 
+    get state(): GameState {
+        return this._state;
+    }
+
+    get score(): number {
+        return this._score;
+    }
+
+    private initField() {
+        this.cells = getEmptyMatrix(this._rows, this._cols);
+        this._state = 'Init';
+    }
+
+    private genBlockType() {
+        let newBlockType: BlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
+
+        //regenerate, id same as before. But accept the new result.
+        if (this.currentBlock && this.currentBlock.block.type === newBlockType) {
+            newBlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
+        }
+
+        return newBlockType;
+    }
+
+    private moveBlockBy(xOffset: number, yOffset: number) {
+        if (this.currentBlock && this.checkBlockPosition(xOffset, yOffset)) {
+            this.currentBlock.pos.x += xOffset;
+            this.currentBlock.pos.y += yOffset;
+        }
+    }
+
+    private incScore(completedLines: number) {
+        switch (completedLines) {
+            case 1:
+                this._score += 100;
+                break;
+            case 2:
+                this._score += 300;
+                break;
+            case 3:
+                this._score += 500;
+                break;
+            case 4:
+                this._score += 1000;
+                break;
+        }
+
+    }
+
+    private removeCompletedLines() {
+        const uncompletedLines: number[][] = this.cells.filter((row) =>
+            row.some((cell) => cell === 0)
+        );
+
+        const completedCnt = this.rows - uncompletedLines.length;
+
+        this.incScore(completedCnt);
+
+        if (completedCnt > 0) {
+            const addLines: number[][] = getEmptyMatrix(completedCnt, this.cols);
+            this.cells = [...addLines, ...uncompletedLines];
+        }
+    }
+
+    startNewGame() {
+        this._state = 'Started';
+        this.newBlock();
+    }
+
     newBlock() {
-        const nextBlockType: BlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
+        const nextBlockType = this.genBlockType();
 
         this.currentBlock = {
             block: new Block(nextBlockType),
@@ -136,7 +211,7 @@ export class GameFieldState {
         this.newBlock();
 
         if (!this.checkBlockPosition(0, 0)) {
-            //Game Over
+            this._state = 'Over';
             this.currentBlock = undefined;
         }
     }
@@ -203,11 +278,12 @@ export class GameFieldState {
         }
     }
 
-    private moveBlockBy(xOffset: number, yOffset: number) {
-        if (this.currentBlock && this.checkBlockPosition(xOffset, yOffset)) {
-            this.currentBlock.pos.x += xOffset;
-            this.currentBlock.pos.y += yOffset;
+    downBlock() {
+        while (this.checkBlockPosition(0, 1)) {
+            this.moveBlockBy(0, 1);
         }
+        //On last chance to move
+        //this.nextBlock();
     }
 
     checkBlockPosition(xOffset: number, yOffset: number): boolean {
@@ -225,19 +301,6 @@ export class GameFieldState {
             .filter(({x, y}) => x >= this._cols || x < 0 || y >= this._rows || this.cells[y][x] != 0);
 
         return collisions.length === 0;
-    }
-
-    private removeCompletedLines() {
-        const uncompletedLines: number[][] = this.cells.filter((row) =>
-            row.some((cell) => cell === 0)
-        );
-
-        const completedCnt = this.rows - uncompletedLines.length;
-
-        if (completedCnt > 0) {
-            const addLines: number[][] = getEmptyMatrix(completedCnt, this.cols);
-            this.cells = [...addLines, ...uncompletedLines];
-        }
     }
 
     getBlockPoints(): BlockPoint[] {
