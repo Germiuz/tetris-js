@@ -9,6 +9,6 @@ export const PlayPauseModal: React.FC<{
 }) => (
     <div className={className}>
         <h3>Pause</h3>
-        <button onClick={onClose}>close</button>
+        <button onClick={onClose}>continue</button>
     </div>
 )

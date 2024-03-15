@@ -106,6 +106,7 @@ export class GameFieldController {
     }
 
     startNewGame() {
+        this.initField();
         this._state = 'Started';
         this.newBlock();
     }

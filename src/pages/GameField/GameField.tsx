@@ -3,7 +3,7 @@ import {GameFieldController} from '@app/store/game';
 
 import styles from './GameField.module.css';
 import classNames from 'classnames';
-import {PlayPauseModal} from '@app/pages/GameField/Modals';
+import {GameOverModal, PlayPauseModal, StartGameModal} from '@app/pages/GameField/Modals';
 import {useTimer} from '@app/hooks/useTimer.ts';
 
 const ROWS = 20;
@@ -24,9 +24,9 @@ function useGameProcessor(rows: number, cols: number) {
     const gameField = useMemo(() => new GameFieldController(rows, cols), []);
 
     const [speed, setSpeed] = useState(0);
-    // const [gameState, setGameState] = useState<'init' | 'play' | 'pause' | 'over'>('init');
-    const [paused, setPaused] = useState(true);
-    const step = useTimer(!paused, 1000 / FPS);
+    const [gameState, setGameState] = useState<'init' | 'play' | 'pause' | 'over'>('init');
+    // const [paused, setPaused] = useState(true);
+    const step = useTimer(gameState === 'play', 1000 / FPS);
 
     useEffect(() => {
         const newSpeed = Math.trunc(gameField.score / 1000);
@@ -37,23 +37,27 @@ function useGameProcessor(rows: number, cols: number) {
         if (step % ((10 - speed) * 4) === 0) {
             gameField.moveBlock('Down');
         }
+
+        if (gameField.state === 'Over') {
+            setGameState('over')
+        }
     }, [step]);
 
     function moveBlock(direction: 'Left' | 'Right' | 'Down') {
-        if (!paused) {
+        if (gameState === 'play') {
             console.log('moveBlock');
             gameField.moveBlock(direction);
         }
     }
 
     function rotateBlock() {
-        if (!paused) {
+        if (gameState === 'play') {
             gameField.rotateBlock();
         }
     }
 
     function downBlock() {
-        if (!paused) {
+        if (gameState === 'play') {
             gameField.downBlock();
         }
     }
@@ -66,12 +70,12 @@ function useGameProcessor(rows: number, cols: number) {
         if (gameField.state === 'Init' || gameField.state === 'Over') {
             gameField.startNewGame();
         }
-        setPaused(false)
+        setGameState('play');
     }
 
 
     function pause() {
-        setPaused(true)
+        setGameState('pause')
     }
 
     return {
@@ -82,7 +86,7 @@ function useGameProcessor(rows: number, cols: number) {
         rows: gameField.rows,
         cols: gameField.cols,
         score: gameField.score,
-        paused,
+        gameState,
         pause,
         play
     };
@@ -143,11 +147,19 @@ export const GameField: React.FC = () => {
         <div
             className={styles.fieldWrapper}
         >
-            <div>{gameProcessor.score}</div>
+            <div>Score: {gameProcessor.score}</div>
 
-            {(gameProcessor.paused && (
+            {(gameProcessor.gameState === 'init') && (
+                <StartGameModal className={styles.modal} onClose={play}/>
+            )}
+
+            {(gameProcessor.gameState === 'pause') && (
                 <PlayPauseModal className={styles.modal} onClose={play}/>
-            ))}
+            )}
+
+            {(gameProcessor.gameState === 'over') && (
+                <GameOverModal className={styles.modal} onClose={play} score={gameProcessor.score}/>
+            )}
 
             <div
                 style={{width: '400px', height: '800px'}}
