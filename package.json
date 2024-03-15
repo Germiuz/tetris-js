@@ -12,7 +12,9 @@
   "dependencies": {
     "classnames": "^2.5.1",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-focus-lock": "^2.11.2",
+    "react-remove-scroll": "^2.5.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.64",
@@ -25,6 +27,7 @@
     "eslint-plugin-react-refresh": "^0.4.5",
     "postcss-nesting": "^12.1.0",
     "typescript": "^5.2.2",
-    "vite": "^5.1.6"
+    "vite": "^5.1.6",
+    "vite-tsconfig-paths": "^4.3.2"
   }
 }
