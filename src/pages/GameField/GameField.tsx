@@ -1,8 +1,10 @@
-import React, {useEffect, useMemo, useState} from 'react';
-import {GameFieldState} from '@app/store/game';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {GameFieldController} from '@app/store/game';
 
 import styles from './GameField.module.css';
 import classNames from 'classnames';
+import {PlayPauseModal} from '@app/pages/GameField/Modals';
+import {useTimer} from '@app/hooks/useTimer.ts';
 
 const ROWS = 20;
 const COLS = 10;
@@ -18,48 +20,41 @@ const Cell: React.FC<{
     )
 }
 
-
 function useGameProcessor(rows: number, cols: number) {
-    const [step, setStep] = useState(0);
-    const gameField = useMemo(() => new GameFieldState(rows, cols), []);
+    const gameField = useMemo(() => new GameFieldController(rows, cols), []);
 
     const [speed, setSpeed] = useState(0);
-    const [gameState, setGameState] = useState<'init' | 'play' | 'pause' | 'over'>('play');
-
-    const rerender = () => {
-        setStep(step => step + 1)
-    }
+    // const [gameState, setGameState] = useState<'init' | 'play' | 'pause' | 'over'>('init');
+    const [paused, setPaused] = useState(true);
+    const step = useTimer(!paused, 1000 / FPS);
 
     useEffect(() => {
-        gameField.newBlock();
-        rerender();
-    }, []);
+        const newSpeed = Math.trunc(gameField.score / 1000);
+        if (speed < newSpeed) {
+            setSpeed(newSpeed);
+        }
 
-    useEffect(() => {
         if (step % ((10 - speed) * 4) === 0) {
             gameField.moveBlock('Down');
         }
     }, [step]);
 
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            rerender();
-        }, 1000 / FPS);
-
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, []);
-
     function moveBlock(direction: 'Left' | 'Right' | 'Down') {
-        if (gameState === 'play') {
+        if (!paused) {
+            console.log('moveBlock');
             gameField.moveBlock(direction);
         }
     }
 
     function rotateBlock() {
-        if (gameState === 'play') {
+        if (!paused) {
             gameField.rotateBlock();
+        }
+    }
+
+    function downBlock() {
+        if (!paused) {
+            gameField.downBlock();
         }
     }
 
@@ -67,12 +62,29 @@ function useGameProcessor(rows: number, cols: number) {
         return gameField.getCell(row, col)
     }
 
+    function play() {
+        if (gameField.state === 'Init' || gameField.state === 'Over') {
+            gameField.startNewGame();
+        }
+        setPaused(false)
+    }
+
+
+    function pause() {
+        setPaused(true)
+    }
+
     return {
         moveBlock,
         rotateBlock,
+        downBlock,
         getCell,
         rows: gameField.rows,
-        cols: gameField.cols
+        cols: gameField.cols,
+        score: gameField.score,
+        paused,
+        pause,
+        play
     };
 }
 
@@ -82,8 +94,10 @@ export const GameField: React.FC = () => {
     const RowsIter = useMemo(() => new Array(gameProcessor.rows).fill(0).map((_, idx) => idx), [gameProcessor.rows]);
     const ColsIter = useMemo(() => new Array(gameProcessor.cols).fill(0).map((_, idx) => idx), [gameProcessor.cols]);
 
+    const fieldRef = useRef<HTMLDivElement>(null);
+
     const keyDownHandler = (e: React.KeyboardEvent) => {
-        // console.log('keyDown', e.key);
+        // console.log('keyDown', `|${e.key}|`);
         if (e.key == 'ArrowUp') {
             gameProcessor.rotateBlock();
             e.preventDefault();
@@ -101,14 +115,49 @@ export const GameField: React.FC = () => {
 
         if (e.key == 'ArrowDown') {
             gameProcessor.moveBlock('Down');
-            // rerender();
+            e.preventDefault();
+        }
+
+        if (e.key == ' ') {
+            gameProcessor.downBlock();
             e.preventDefault();
         }
     }
 
+    const handleFocus = () => {
+        console.log('focused')
+        gameProcessor.play();
+    }
+
+    const handleFocusLost = () => {
+        console.log('focusLost')
+        gameProcessor.pause();
+    }
+
+    const play = () => {
+        fieldRef.current?.focus();
+        // gameProcessor.play();
+    }
+
     return (
-        <div onKeyDown={keyDownHandler} tabIndex={0}>
-            <div style={{width: '400px', height: '800px'}} className={styles.table}>
+        <div
+            className={styles.fieldWrapper}
+        >
+            <div>{gameProcessor.score}</div>
+
+            {(gameProcessor.paused && (
+                <PlayPauseModal className={styles.modal} onClose={play}/>
+            ))}
+
+            <div
+                style={{width: '400px', height: '800px'}}
+                className={styles.field}
+                tabIndex={0}
+                ref={fieldRef}
+                onKeyDown={keyDownHandler}
+                onFocus={handleFocus}
+                onBlur={handleFocusLost}
+            >
                 {RowsIter.map(row => (
                     <div key={row} className={styles.row}>
                         {ColsIter.map(col => (
