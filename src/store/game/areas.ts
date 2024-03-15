@@ -74,17 +74,3 @@ export function getBlockArea(type: BlockType) {
             return Smashboy
     }
 }
-
-// export function rotateBlockLeft(block: Block) {
-//     const rotatedArea = block.area.map((row, rowIndex) =>
-//         row.map((_, colIndex) => block.area[colIndex][block.area.length - 1 - rowIndex])
-//     );
-//     return { type: block.type, area: rotatedArea };
-// }
-//
-// export function rotateBlockRight(block: Block) {
-//     const rotatedArea = block.area.map((row, rowIndex) =>
-//         row.map((_, colIndex) => block.area[block.area.length - 1 - rowIndex][colIndex])
-//     );
-//     return { type: block.type, area: rotatedArea };
-// }
