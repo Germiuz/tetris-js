@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import postcssNesting from 'postcss-nesting';
+import postcssNested from 'postcss-nested';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
 // https://vitejs.dev/config/
@@ -12,7 +12,7 @@ export default defineConfig({
   css: {
     postcss: {
       plugins: [
-        postcssNesting
+          postcssNested
       ]
     }
   }
