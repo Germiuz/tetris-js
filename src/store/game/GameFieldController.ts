@@ -22,9 +22,10 @@ export class GameFieldController {
     private currentBlock?: {
         block: Block;
         pos: {
-            x: number,
-            y: number
-        }
+            x: number;
+            y: number;
+        };
+        nextBlockType: BlockType;
     }
 
     constructor(rows: number, cols: number) {
@@ -47,6 +48,10 @@ export class GameFieldController {
 
     get score(): number {
         return this._score;
+    }
+
+    get nextBlockType(): BlockType | undefined {
+        return this.currentBlock?.nextBlockType;
     }
 
     private initField() {
@@ -107,19 +112,21 @@ export class GameFieldController {
 
     startNewGame() {
         this.initField();
-        this._state = 'Started';
         this.newBlock();
+        this._state = 'Started';
+        this._score = 0;
     }
 
     newBlock() {
-        const nextBlockType = this.genBlockType();
+        const nextBlockType = this.currentBlock?.nextBlockType || this.genBlockType();
 
         this.currentBlock = {
             block: new Block(nextBlockType),
             pos: {
                 x: Math.floor(this._cols / 2) - 1,
                 y: 0
-            }
+            },
+            nextBlockType: this.genBlockType()
         }
     }
 
@@ -149,30 +156,24 @@ export class GameFieldController {
         this.currentBlock.block.rotate(direction);
         if (!this.checkBlockPosition(0, 0)) {
             if (this.checkBlockPosition(1, 0)) {
-                console.log('Adjusted by +1')
                 this.moveBlockBy(1, 0)
                 return;
             }
 
             if (this.checkBlockPosition(-1, 0)) {
-                console.log('Adjusted by -1')
                 this.moveBlockBy(-1, 0)
                 return;
             }
 
             if (this.checkBlockPosition(2, 0)) {
-                console.log('Adjusted by +2')
                 this.moveBlockBy(2, 0)
                 return;
             }
 
             if (this.checkBlockPosition(-2, 0)) {
-                console.log('Adjusted by -2')
                 this.moveBlockBy(-2, 0)
                 return;
             }
-
-            console.log('Rotated back')
 
             this.currentBlock.block.rotate(direction === 'left' ? 'right' : 'left');
         }
