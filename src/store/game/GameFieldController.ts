@@ -9,8 +9,6 @@ function getEmptyMatrix(rows: number, cols: number): number[][] {
 
 const AllowedBlocks = ['OrangeRicky', 'BlueRicky', 'Hero', 'Teewee', 'ClevelandZ', 'RhodeIslandZ', 'Smashboy'];
 
-
-
 export class BlockTypeGenerator {
     private _nextBlockType: BlockType
 
@@ -48,6 +46,7 @@ export class GameFieldController {
 
     private _score: number = 0;
     private _totalLines: number = 0;
+    private _level: number = 1;
 
     private _state: GameState = 'Init';
 
@@ -88,6 +87,10 @@ export class GameFieldController {
         return this._totalLines;
     }
 
+    get level(): number {
+        return this._level;
+    }
+
     get nextBlockType(): BlockType | undefined {
         return this.blockTypeGenerator.nextBlockType;
     }
@@ -99,22 +102,24 @@ export class GameFieldController {
         }
     }
 
-    private incScore(completedLines: number) {
+    private getScoreForLines(completedLines: number) {
         switch (completedLines) {
-            case 1:
-                this._score += 100;
-                break;
-            case 2:
-                this._score += 300;
-                break;
-            case 3:
-                this._score += 500;
-                break;
-            case 4:
-                this._score += 1000;
-                break;
+            case 1: return  40;
+            case 2: return  300;
+            case 3: return  500;
+            case 4: return 1200;
+            default: return 0;
         }
+    }
 
+    private calcScore(completedLines: number) {
+        this._totalLines += completedLines;
+
+        const newScores = this.getScoreForLines(completedLines) * (this._level - 1);
+        this._score += newScores;
+        if (this._totalLines >= this._level * 10) {
+            this._level++;
+        }
     }
 
     private removeCompletedLines() {
@@ -123,9 +128,7 @@ export class GameFieldController {
         );
 
         const completedCnt = this.rows - uncompletedLines.length;
-        this._totalLines += completedCnt;
-
-        this.incScore(completedCnt);
+        this.calcScore(completedCnt);
 
         if (completedCnt > 0) {
             const addLines: number[][] = getEmptyMatrix(completedCnt, this.cols);
@@ -138,6 +141,7 @@ export class GameFieldController {
 
         this._score = 0;
         this._totalLines = 0;
+        this._level = 1;
         this._state = 'Started';
         this.newBlock();
     }

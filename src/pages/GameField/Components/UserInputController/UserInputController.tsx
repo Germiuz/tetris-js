@@ -30,7 +30,7 @@ export const UserInputController = React.forwardRef<HTMLDivElement, HTMLDivExten
                         onAction('Right')
                         return;
                     }
-                    
+
                     if (touchHandler.delta.x < -SWIPE_THRESHOLD) {
                         onAction('Left')
                         return;

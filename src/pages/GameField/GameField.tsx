@@ -135,7 +135,7 @@ export const GameField: React.FC = () => {
             </FixedRatioContainer>
 
             <div className={styles.infoContainer}>
-                <div className={styles.roundInfoBlock}>Level: {gameProcessor.speed + 1}</div>
+                <div className={styles.roundInfoBlock}>Level: {gameField.level}</div>
                 <div className={styles.roundInfoBlock}>Score: {gameField.score}</div>
 
                 <div className={styles.roundInfoBlock}>Lines: {gameField.totalLines}</div>
