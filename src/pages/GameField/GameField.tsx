@@ -1,4 +1,4 @@
-import React, {useRef} from 'react';
+import React, {useEffect, useMemo, useRef} from 'react';
 import {GameOverModal, PlayPauseModal, StartGameModal} from '@app/pages/GameField/Modals';
 import {useGameProcessor} from '@app/pages/GameField/hooks/useGameProcessor.ts';
 import {getBlockArea} from '@app/store/game/areas.ts';
@@ -7,15 +7,41 @@ import {Block} from '@app/pages/GameField/Components/Block/Block.tsx';
 import {Grid} from '@app/pages/GameField/Components/Grid/Grid.tsx';
 
 import styles from './GameField.module.css';
-import {UserInputController} from '@app/pages/GameField/Components/UserInputController/UserInputController.tsx';
+import {
+    UserInputAction,
+    UserInputController
+} from '@app/pages/GameField/Components/UserInputController/UserInputController.tsx';
+import {useLocalStorage} from '@app/hooks/useStorage.ts';
+import {GameFieldController} from '@app/store/game';
+import classNames from 'classnames';
 
 const ROWS = 20;
 const COLS = 10;
 
+type GameStatistic = {
+    maxScore: number;
+}
+
 export const GameField: React.FC = () => {
-    const gameProcessor = useGameProcessor(ROWS, COLS);
+    const gameField = useMemo(() => new GameFieldController(ROWS, COLS), []);
+    const gameProcessor = useGameProcessor(gameField);
 
     const fieldRef = useRef<HTMLDivElement>(null);
+
+    const [statistic, saveStatistic] = useLocalStorage<GameStatistic>('game-statistic', {
+        maxScore: 0
+    });
+
+    useEffect(() => {
+        if (gameField.state === 'Over') {
+            if (gameField.score > statistic.maxScore) {
+                saveStatistic({
+                    ...statistic,
+                    maxScore: gameField.score
+                })
+            }
+        }
+    }, [gameField.state])
 
     const handleFocus = () => {
         gameProcessor.play();
@@ -23,61 +49,108 @@ export const GameField: React.FC = () => {
 
     const play = () => {
         fieldRef.current?.focus();
+        gameProcessor.play();
     }
 
-    const left = () => gameProcessor.moveBlock('Left');
-    const right = () => gameProcessor.moveBlock('Right');
-    const down = () => gameProcessor.moveBlock('Down');
-    const fall = () => gameProcessor.downBlock();
-    const rotate = () => gameProcessor.rotateBlock();
-    const pause = () => gameProcessor.pause();
+    const pause = () => {
+        gameProcessor.pause()
+    }
+
+    const newGame = () => {
+        fieldRef.current?.focus();
+        gameProcessor.newGame()
+    }
+
+    const onUserAction = (action: UserInputAction) => {
+        if (action === 'Left') {
+            gameField.moveBlock('Left');
+        }
+
+        if (action === 'Right') {
+            gameField.moveBlock('Right');
+        }
+
+        if (action === 'Down') {
+            gameField.moveBlock('Down');
+        }
+
+        if (action === 'Fall') {
+            gameField.downBlock();
+        }
+
+        if (action === 'Rotate') {
+            gameField.rotateBlock();
+        }
+
+        if (action === 'Esc') {
+            pause()
+        }
+    }
 
     return (
         <div
-            className={styles.gameWrapper}
+            className={classNames(styles.gameWrapper, styles.fullSizeBlock)}
         >
-            <div>Score: {gameProcessor.score}</div>
+            <FixedRatioContainer
+                ratio={0.5}
+                verticalAlign={'start'}
+            >
+                <div className={classNames(styles.fieldWrapper, styles.fullSizeBlock)}>
+                    {(gameProcessor.gameState === 'init') && (
+                        <StartGameModal
+                            className={styles.modal}
+                            onClose={play}
+                        />
+                    )}
 
-            <div className={styles.nextBlockWrapper}>
-                <Block
-                    blockArea={getBlockArea(gameProcessor.nextBlockType || 'Hero')}
-                />
-            </div>
+                    {(gameProcessor.gameState === 'pause') && (
+                        <PlayPauseModal
+                            className={styles.modal}
+                            onClose={play}
+                            onNewGame={newGame}
+                        />
+                    )}
 
-            {(gameProcessor.gameState === 'init') && (
-                <StartGameModal className={styles.modal} onClose={play}/>
-            )}
-
-            {(gameProcessor.gameState === 'pause') && (
-                <PlayPauseModal className={styles.modal} onClose={play}/>
-            )}
-
-            {(gameProcessor.gameState === 'over') && (
-                <GameOverModal className={styles.modal} onClose={play} score={gameProcessor.score}/>
-            )}
-
-            <FixedRatioContainer ratio={0.5}>
-                <UserInputController
-                    className={styles.fieldWrapper}
-                    ref={fieldRef}
-                    onFocus={handleFocus}
-                    onBlur={pause}
-
-                    onLeft={left}
-                    onRight={right}
-                    onDown={down}
-                    onDownLong={fall}
-                    onUp={rotate}
-                    onEsc={pause}
-                >
-                    <Grid
-                        width={gameProcessor.cols}
-                        height={gameProcessor.rows}
-                        getCell={(row, col) => gameProcessor.getCell(row, col)}
-                    />
-                </UserInputController>
+                    {(gameProcessor.gameState === 'over') && (
+                        <GameOverModal
+                            className={styles.modal}
+                            onClose={play}
+                            score={gameField.score}
+                        />
+                    )}
+                    <UserInputController
+                        className={styles.fullSizeBlock}
+                        ref={fieldRef}
+                        onFocus={handleFocus}
+                        onBlur={pause}
+                        onAction={onUserAction}
+                    >
+                        <Grid
+                            width={gameField.cols}
+                            height={gameField.rows}
+                            getCell={(row, col) => gameField.getCell(row, col)}
+                        />
+                    </UserInputController>
+                </div>
             </FixedRatioContainer>
 
+            <div className={styles.infoContainer}>
+                <div className={styles.roundInfoBlock}>Level: {gameProcessor.speed + 1}</div>
+                <div className={styles.roundInfoBlock}>Score: {gameField.score}</div>
+
+                <div className={styles.roundInfoBlock}>Lines: {gameField.totalLines}</div>
+
+                <div className={styles.roundInfoBlock}>Max score: {statistic.maxScore}</div>
+
+                <div className={styles.roundInfoBlock}>
+                    <div>Next block:</div>
+                    <div className={styles.nextBlockWrapper}>
+                        <Block
+                            blockArea={getBlockArea(gameField.nextBlockType || 'Hero')}
+                        />
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

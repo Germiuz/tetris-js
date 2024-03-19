@@ -4,27 +4,10 @@ import {useTimer} from '@app/hooks/useTimer.ts';
 
 const FPS = 50;
 
-export function useGameProcessor(rows: number, cols: number) {
-    const gameField = useMemo(() => new GameFieldController(rows, cols), []);
-
+export function useGameProcessor(gameField: GameFieldController) {
     const [speed, setSpeed] = useState(0);
     const [inProcess, setInProcess]= useState(true);
     const step = useTimer(inProcess, 1000 / FPS);
-
-    useEffect(() => {
-        const newSpeed = Math.trunc(gameField.score / 1000);
-        if (speed < newSpeed) {
-            setSpeed(newSpeed);
-        }
-
-        if (gameField.state === 'Over') {
-            setInProcess(false)
-        }
-
-        if (step % ((10 - speed) * 4) === 0) {
-            gameField.moveBlock('Down');
-        }
-    }, [step]);
 
     const gameState: 'init' | 'play' | 'pause' | 'over' = useMemo(() => {
         if (gameField.state === 'Init') {
@@ -41,33 +24,34 @@ export function useGameProcessor(rows: number, cols: number) {
         }
     }, [inProcess, gameField.state])
 
-    function moveBlock(direction: 'Left' | 'Right' | 'Down') {
-        if (inProcess) {
-            gameField.moveBlock(direction);
+    useEffect(() => {
+        const newSpeed = Math.trunc(gameField.score / 1000);
+        if (speed < newSpeed) {
+            setSpeed(newSpeed);
         }
-    }
 
-    function rotateBlock() {
-        if (inProcess) {
-            gameField.rotateBlock();
+        if (gameField.state === 'Over') {
+            setInProcess(false)
         }
-    }
 
-    function downBlock() {
-        if (inProcess) {
-            gameField.downBlock();
+        if (step % ((10 - speed) * 4) === 0) {
+            gameField.moveBlock('Down');
         }
-    }
+    }, [step]);
 
-    function getCell(row: number, col: number) {
-        return gameField.getCell(row, col)
+    function newGame() {
+        console.log('New Game')
+        setSpeed(0);
+        gameField.startNewGame();
+        setInProcess(true);
     }
 
     function play() {
         if (gameField.state === 'Init' || gameField.state === 'Over') {
-            gameField.startNewGame();
+            newGame();
+        } else {
+            setInProcess(true);
         }
-        setInProcess(true);
     }
 
 
@@ -76,16 +60,11 @@ export function useGameProcessor(rows: number, cols: number) {
     }
 
     return {
-        moveBlock,
-        rotateBlock,
-        downBlock,
-        getCell,
-        rows: gameField.rows,
-        cols: gameField.cols,
-        score: gameField.score,
-        nextBlockType: gameField.nextBlockType,
+        gameField,
         gameState,
         pause,
-        play
+        play,
+        newGame,
+        speed
     };
 }

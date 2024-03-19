@@ -9,6 +9,37 @@ function getEmptyMatrix(rows: number, cols: number): number[][] {
 
 const AllowedBlocks = ['OrangeRicky', 'BlueRicky', 'Hero', 'Teewee', 'ClevelandZ', 'RhodeIslandZ', 'Smashboy'];
 
+
+
+export class BlockTypeGenerator {
+    private _nextBlockType: BlockType
+
+    get nextBlockType(): BlockType {
+        return this._nextBlockType;
+    }
+
+    constructor() {
+        this._nextBlockType = this.genNextBlockType();
+    }
+
+
+    private genNextBlockType() {
+        let newBlockType: BlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
+
+        //regenerate, id same as before. But accept the new result.
+        if (this._nextBlockType === newBlockType) {
+            newBlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
+        }
+
+        return newBlockType;
+    }
+
+    getNextBlockType() {
+        this._nextBlockType = this.genNextBlockType();
+        return this._nextBlockType;
+    }
+}
+
 export class GameFieldController {
     private cells: number[][] = [];
 
@@ -16,8 +47,11 @@ export class GameFieldController {
     private readonly _cols: number;
 
     private _score: number = 0;
+    private _totalLines: number = 0;
 
     private _state: GameState = 'Init';
+
+    private blockTypeGenerator: BlockTypeGenerator;
 
     private currentBlock?: {
         block: Block;
@@ -25,14 +59,14 @@ export class GameFieldController {
             x: number;
             y: number;
         };
-        nextBlockType: BlockType;
     }
 
     constructor(rows: number, cols: number) {
         this._rows = rows;
         this._cols = cols;
 
-        this.initField();
+        this.blockTypeGenerator = new BlockTypeGenerator();
+        this._state = 'Init';
     }
 
     get rows(): number {
@@ -50,24 +84,12 @@ export class GameFieldController {
         return this._score;
     }
 
+    get totalLines(): number {
+        return this._totalLines;
+    }
+
     get nextBlockType(): BlockType | undefined {
-        return this.currentBlock?.nextBlockType;
-    }
-
-    private initField() {
-        this.cells = getEmptyMatrix(this._rows, this._cols);
-        this._state = 'Init';
-    }
-
-    private genBlockType() {
-        let newBlockType: BlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
-
-        //regenerate, id same as before. But accept the new result.
-        if (this.currentBlock && this.currentBlock.block.type === newBlockType) {
-            newBlockType = AllowedBlocks[Math.trunc(Math.random() * AllowedBlocks.length)] as BlockType;
-        }
-
-        return newBlockType;
+        return this.blockTypeGenerator.nextBlockType;
     }
 
     private moveBlockBy(xOffset: number, yOffset: number) {
@@ -101,6 +123,7 @@ export class GameFieldController {
         );
 
         const completedCnt = this.rows - uncompletedLines.length;
+        this._totalLines += completedCnt;
 
         this.incScore(completedCnt);
 
@@ -111,23 +134,24 @@ export class GameFieldController {
     }
 
     startNewGame() {
-        this.initField();
-        this.newBlock();
-        this._state = 'Started';
+        this.cells = getEmptyMatrix(this._rows, this._cols);
+
         this._score = 0;
+        this._totalLines = 0;
+        this._state = 'Started';
+        this.newBlock();
     }
 
     newBlock() {
-        const nextBlockType = this.currentBlock?.nextBlockType || this.genBlockType();
-
         this.currentBlock = {
-            block: new Block(nextBlockType),
+            block: new Block(this.blockTypeGenerator.nextBlockType),
             pos: {
                 x: Math.floor(this._cols / 2) - 1,
                 y: 0
             },
-            nextBlockType: this.genBlockType()
         }
+
+        this.blockTypeGenerator.getNextBlockType()
     }
 
     nextBlock() {
@@ -251,7 +275,7 @@ export class GameFieldController {
     }
 
     getCell(row: number, col: number) {
-        return this.getBlockCell(row, col) || this.cells[row][col];
+        return this.getBlockCell(row, col) || this.cells?.[row]?.[col] || 0;
     }
 
     setCell(row: number, col: number, val: number) {

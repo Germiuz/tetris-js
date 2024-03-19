@@ -4,14 +4,29 @@ import styles from './FixedRatioContainer.module.css'
 import classNames from 'classnames';
 import {HTMLDivExtension} from '@app/layouts/types.ts';
 
+type Align = 'center' | 'start' | 'end';
+const VerticalAlignStylesMap: Record<Align, string> = {
+    start: styles.vAlignStart,
+    end: styles.vAlignEnd,
+    center: styles.vAlignCenter,
+}
 
+const HorizontalAlignStylesMap: Record<Align, string> = {
+    start: styles.hAlignStart,
+    end: styles.hAlignEnd,
+    center: styles.hAlignCenter,
+}
 
 export const FixedRatioContainer: React.FC<HTMLDivExtension<{
     readonly ratio?: number;
+    readonly verticalAlign?: Align;
+    readonly horizontalAlign?: Align;
     readonly children: ReactNode;
 }>> = ({
     className,
     ratio,
+    verticalAlign,
+    horizontalAlign,
     children,
     ...htmlProps
 }) => {
@@ -49,9 +64,16 @@ export const FixedRatioContainer: React.FC<HTMLDivExtension<{
         setForceEvent(forceEvent + 1);
     }, [containerWrapper.current?.clientWidth, containerWrapper.current?.clientHeight, ratio]);
 
+    const composedClassName = classNames(
+        className,
+        styles.containerWrapper,
+        horizontalAlign && HorizontalAlignStylesMap[horizontalAlign],
+        verticalAlign && VerticalAlignStylesMap[verticalAlign]
+    )
+
     return (
         <div
-            className={classNames(className, styles.containerWrapper)}
+            className={composedClassName}
             ref={containerWrapper}
             {...htmlProps}
         >

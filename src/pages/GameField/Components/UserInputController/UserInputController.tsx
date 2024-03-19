@@ -3,23 +3,18 @@ import {HTMLDivExtension} from '@app/layouts/types.ts';
 import {useSwipe} from '@app/hooks/useSwipe.ts';
 import {useForwardRef} from '@app/hooks/useForwardRef.ts';
 
+import styles from './UserInputController.module.css'
+import classNames from 'classnames';
+
 const SWIPE_THRESHOLD = 20;
 
+export type UserInputAction = 'Left' | 'Right' | 'Rotate' | 'Down' | 'Fall' | 'Esc';
+
 export const UserInputController = React.forwardRef<HTMLDivElement, HTMLDivExtension<{
-    readonly onLeft?: () => void;
-    readonly onRight?: () => void;
-    readonly onUp?: () => void;
-    readonly onDown?: () => void;
-    readonly onDownLong?: () => void;
-    readonly onEsc?: () => void;
+    readonly onAction: (action: UserInputAction) => void;
     readonly children: React.ReactNode
 }>>(({
-    onLeft,
-    onRight,
-    onUp,
-    onDown,
-    onDownLong,
-    onEsc,
+    onAction,
     className,
     children,
     ...htmlProps
@@ -28,66 +23,67 @@ export const UserInputController = React.forwardRef<HTMLDivElement, HTMLDivExten
 
         const touchHandler = useSwipe<HTMLDivElement>();
 
-        const callEvent = (event?: () => void) => {
-            if (event) {
-                event();
-            }
-        }
-
         useEffect(() => {
             if (touchHandler.finished) {
                 if (Math.abs(touchHandler.delta.x) > Math.abs(touchHandler.delta.y)) {
                     if (touchHandler.delta.x > SWIPE_THRESHOLD) {
-                        callEvent(onRight)
+                        onAction('Right')
+                        return;
                     }
+                    
                     if (touchHandler.delta.x < -SWIPE_THRESHOLD) {
-                        callEvent(onLeft)
+                        onAction('Left')
+                        return;
                     }
                 } else {
                     if (touchHandler.delta.y > SWIPE_THRESHOLD) {
-                        if (touchHandler.delta.y > SWIPE_THRESHOLD * 10) {
-                            callEvent(onDownLong)
-                        } else {
-                            callEvent(onDown)
+                        if (touchHandler.delta.y > SWIPE_THRESHOLD * 5) {
+                            onAction('Fall')
+                            return;
                         }
+
+                        onAction('Down')
+                        return;
                     }
-                    else {
-                        callEvent(onUp)
+
+                    if (touchHandler.delta.y < -SWIPE_THRESHOLD) {
+                        onAction('Esc')
+                        return;
                     }
+
+                    onAction('Rotate')
                 }
             }
         }, [touchHandler.finished]);
 
         const keyDownHandler = (e: React.KeyboardEvent<HTMLDivElement>) => {
-            console.log(e);
-            console.log(e);
             if (e.key == 'ArrowUp') {
-                callEvent(onUp);
+                onAction('Rotate')
                 e.preventDefault();
             }
 
             if (e.key == 'ArrowLeft') {
-                callEvent(onLeft)
+                onAction('Left')
                 e.preventDefault();
             }
 
             if (e.key == 'ArrowRight') {
-                callEvent(onRight)
+                onAction('Right')
                 e.preventDefault();
             }
 
             if (e.key == 'ArrowDown') {
-                callEvent(onDown)
+                onAction('Down')
                 e.preventDefault();
             }
 
             if (e.key == ' ') {
-                callEvent(onDownLong)
+                onAction('Fall')
                 e.preventDefault();
             }
 
             if (e.key == 'Escape') {
-                callEvent(onEsc)
+                onAction('Esc')
                 e.preventDefault();
             }
 
@@ -100,9 +96,11 @@ export const UserInputController = React.forwardRef<HTMLDivElement, HTMLDivExten
         return (
             <div
                 ref={fieldRef}
-                className={className}
+                className={classNames(className, styles.noBorder)}
                 tabIndex={0}
                 onKeyDown={keyDownHandler}
+                // onClick={() => onAction('Rotate')}
+                // onDoubleClick={() => onAction('Esc')}
                 {...touchHandler.touchEvents}
                 {...htmlProps}
             >
