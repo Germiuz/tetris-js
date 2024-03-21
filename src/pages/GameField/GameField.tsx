@@ -12,7 +12,7 @@ import {
     UserInputController
 } from '@app/pages/GameField/Components/UserInputController/UserInputController.tsx';
 import {useLocalStorage} from '@app/hooks/useStorage.ts';
-import {GameFieldController} from '@app/store/game';
+import {Game} from '@app/store/game';
 import classNames from 'classnames';
 
 const ROWS = 20;
@@ -23,8 +23,8 @@ type GameStatistic = {
 }
 
 export const GameField: React.FC = () => {
-    const gameField = useMemo(() => new GameFieldController(ROWS, COLS), []);
-    const gameProcessor = useGameProcessor(gameField);
+    const game = useMemo(() => new Game(ROWS, COLS), []);
+    const gameProcessor = useGameProcessor(game);
 
     const fieldRef = useRef<HTMLDivElement>(null);
 
@@ -33,15 +33,15 @@ export const GameField: React.FC = () => {
     });
 
     useEffect(() => {
-        if (gameField.state === 'Over') {
-            if (gameField.score > statistic.maxScore) {
+        if (game.state === 'Over') {
+            if (game.score > statistic.maxScore) {
                 saveStatistic({
                     ...statistic,
-                    maxScore: gameField.score
+                    maxScore: game.score
                 })
             }
         }
-    }, [gameField.state])
+    }, [game.state])
 
     const handleFocus = () => {
         gameProcessor.play();
@@ -63,23 +63,23 @@ export const GameField: React.FC = () => {
 
     const onUserAction = (action: UserInputAction) => {
         if (action === 'Left') {
-            gameField.moveBlock('Left');
+            game.moveBlock('Left');
         }
 
         if (action === 'Right') {
-            gameField.moveBlock('Right');
+            game.moveBlock('Right');
         }
 
         if (action === 'Down') {
-            gameField.moveBlock('Down');
+            game.moveBlock('Down');
         }
 
         if (action === 'Fall') {
-            gameField.downBlock();
+            game.downBlock();
         }
 
         if (action === 'Rotate') {
-            gameField.rotateBlock();
+            game.rotateBlock();
         }
 
         if (action === 'Esc') {
@@ -115,7 +115,7 @@ export const GameField: React.FC = () => {
                         <GameOverModal
                             className={styles.modal}
                             onClose={play}
-                            score={gameField.score}
+                            score={game.score}
                         />
                     )}
                     <UserInputController
@@ -126,19 +126,19 @@ export const GameField: React.FC = () => {
                         onAction={onUserAction}
                     >
                         <Grid
-                            width={gameField.cols}
-                            height={gameField.rows}
-                            getCell={(row, col) => gameField.getCell(row, col)}
+                            width={game.cols}
+                            height={game.rows}
+                            getCell={(row, col) => game.getCell(row, col)}
                         />
                     </UserInputController>
                 </div>
             </FixedRatioContainer>
 
             <div className={styles.infoContainer}>
-                <div className={styles.roundInfoBlock}>Level: {gameField.level}</div>
-                <div className={styles.roundInfoBlock}>Score: {gameField.score}</div>
+                <div className={styles.roundInfoBlock}>Level: {game.level}</div>
+                <div className={styles.roundInfoBlock}>Score: {game.score}</div>
 
-                <div className={styles.roundInfoBlock}>Lines: {gameField.totalLines}</div>
+                <div className={styles.roundInfoBlock}>Lines: {game.totalLines}</div>
 
                 <div className={styles.roundInfoBlock}>Max score: {statistic.maxScore}</div>
 
@@ -146,7 +146,7 @@ export const GameField: React.FC = () => {
                     <div>Next block:</div>
                     <div className={styles.nextBlockWrapper}>
                         <Block
-                            blockArea={getBlockArea(gameField.nextBlockType || 'Hero')}
+                            blockArea={getBlockArea(game.nextBlockType || 'Hero')}
                         />
                     </div>
                 </div>

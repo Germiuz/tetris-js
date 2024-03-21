@@ -1,4 +1,4 @@
-export {GameFieldController} from '@app/store/game/GameFieldController';
+export {Game} from '@app/store/game/Game';
 
 
 

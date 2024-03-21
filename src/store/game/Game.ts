@@ -38,7 +38,7 @@ export class BlockTypeGenerator {
     }
 }
 
-export class GameFieldController {
+export class Game {
     private cells: number[][] = [];
 
     private readonly _rows: number;
@@ -115,7 +115,7 @@ export class GameFieldController {
     private calcScore(completedLines: number) {
         this._totalLines += completedLines;
 
-        const newScores = this.getScoreForLines(completedLines) * (this._level - 1);
+        const newScores = this.getScoreForLines(completedLines) * (this._level);
         this._score += newScores;
         if (this._totalLines >= this._level * 10) {
             this._level++;

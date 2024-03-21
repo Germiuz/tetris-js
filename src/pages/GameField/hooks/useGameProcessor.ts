@@ -1,18 +1,18 @@
 import {useEffect, useMemo, useState} from 'react';
-import {GameFieldController} from '@app/store/game';
+import {Game} from '@app/store/game';
 import {useTimer} from '@app/hooks/useTimer.ts';
 
 const FPS = 50;
 
-export function useGameProcessor(gameField: GameFieldController) {
+export function useGameProcessor(game: Game) {
     const [inProcess, setInProcess]= useState(true);
     const step = useTimer(inProcess, 1000 / FPS);
 
     const gameState: 'init' | 'play' | 'pause' | 'over' = useMemo(() => {
-        if (gameField.state === 'Init') {
+        if (game.state === 'Init') {
             return 'init';
         }
-        if (gameField.state === 'Over') {
+        if (game.state === 'Over') {
             return 'over'
         }
 
@@ -21,26 +21,26 @@ export function useGameProcessor(gameField: GameFieldController) {
         } else {
             return 'pause';
         }
-    }, [inProcess, gameField.state])
+    }, [inProcess, game.state])
 
     useEffect(() => {
-        if (gameField.state === 'Over') {
+        if (game.state === 'Over') {
             setInProcess(false)
         }
 
-        if (step % ((11 - gameField.level) * 4) === 0) {
-            gameField.moveBlock('Down');
+        if (step % ((11 - game.level) * 4) === 0) {
+            game.moveBlock('Down');
         }
     }, [step]);
 
     function newGame() {
         console.log('New Game')
-        gameField.startNewGame();
+        game.startNewGame();
         setInProcess(true);
     }
 
     function play() {
-        if (gameField.state === 'Init' || gameField.state === 'Over') {
+        if (game.state === 'Init' || game.state === 'Over') {
             newGame();
         } else {
             setInProcess(true);
@@ -53,7 +53,7 @@ export function useGameProcessor(gameField: GameFieldController) {
     }
 
     return {
-        gameField,
+        game,
         gameState,
         pause,
         play,

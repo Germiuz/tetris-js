@@ -1,13 +1,21 @@
 .cell {
     position: relative;
     flex: 1 1 auto;
-
     border: 2px solid var(--border-color);
+}
+
+.cellEmpty {
+    background-color: #eee;
+    border-color: #fff;
+}
+
+.cellBlock {
     border-radius: 4px;
+    border-color: var(--cell-color);
 
     color: var(--text-color);
     background-color: var(--cell-color);
-    background-image: linear-gradient(90deg, #00000000 0%, #FFFFFF30 100%);
+    background-image: linear-gradient(315deg, #00000080 0%, #FFFFFF30 80%);
     filter: drop-shadow(2px 2px 2px #888);
 
     overflow: hidden;
@@ -53,12 +61,6 @@
     &.cellTypeO {
         --cell-color: var(--color-O);
         --text-color: var(--color-J);
-    }
-
-    &.cellEmpty {
-        --cell-color: #eee;
-        border-color: #fff;
-        filter: none;
     }
 }
 
