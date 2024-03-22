@@ -14,6 +14,10 @@ export class Block {
         return this._type;
     }
 
+    get areaSize(): number {
+        return this._area.length;
+    }
+
     constructor(type: BlockType) {
         this._type = type;
         this._area = getBlockArea(type);

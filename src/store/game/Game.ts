@@ -147,11 +147,13 @@ export class Game {
     }
 
     newBlock() {
+        const newBlock = new Block(this.blockTypeGenerator.nextBlockType)
+
         this.currentBlock = {
-            block: new Block(this.blockTypeGenerator.nextBlockType),
+            block: newBlock,
             pos: {
                 x: Math.floor(this._cols / 2) - 1,
-                y: 0
+                y: 1 - newBlock.areaSize
             },
         }
 
@@ -252,6 +254,7 @@ export class Game {
                 x: x + xOffset,
                 y: y + yOffset
             }))
+            .filter(({y}) => y >= 0)
             .filter(({x, y}) => x >= this._cols || x < 0 || y >= this._rows || this.cells[y][x] != 0);
 
         return collisions.length === 0;
