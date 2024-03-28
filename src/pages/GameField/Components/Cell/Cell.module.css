@@ -62,6 +62,11 @@
         --cell-color: var(--color-O);
         --text-color: var(--color-J);
     }
+
+    &.cellShadow {
+        background-color: #eee;
+        border-color: #fff;
+    }
 }
 
 .symbol {
