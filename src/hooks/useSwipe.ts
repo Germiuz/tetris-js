@@ -35,7 +35,7 @@ export function useSwipe<T>() {
         }
     };
 
-    const onTouchEnd: TouchEventHandler<T> = (event: TouchEvent<T>) => {
+    const onTouchEnd: TouchEventHandler<T> = () => {
         setTouchState(prevState => ({...prevState, finished: true}));
     }
 

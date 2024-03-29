@@ -1,7 +1,9 @@
 .cell {
     position: relative;
     flex: 1 1 auto;
-    border: 2px solid var(--border-color);
+    /*border: 1px solid var(--border-color);*/
+    /*border: 1px solid #444;*/
+    box-shadow: 0 0 5px #444;
 }
 
 .cellEmpty {
@@ -10,8 +12,10 @@
 }
 
 .cellBlock {
+    position: relative;
+
     border-radius: 4px;
-    border-color: var(--cell-color);
+    /*border-color: var(--cell-color);*/
 
     color: var(--text-color);
     background-color: var(--cell-color);
@@ -67,6 +71,21 @@
         background-color: #eee;
         border-color: #fff;
     }
+
+    &::after {
+        position: absolute;
+        content: "";
+        width: 60%;
+        height: 60%;
+        border-radius: 4px;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        left: 50%;
+        /*box-shadow: 0 0 5px #444;*/
+        /*box-shadow: 5px 5px 5px #444, -5px -5px 5px #444;*/
+        /*box-shadow: 0 0 5px 0px var(--cell-color);*/
+        box-shadow: 5px 5px 5px var(--cell-color), -5px -5px 5px var(--cell-color);
+    }
 }
 
 .symbol {
@@ -77,6 +96,4 @@
     display: flex;
     align-items: center;
     justify-content: center;
-
-    /*font-size: 24px;*/
 }

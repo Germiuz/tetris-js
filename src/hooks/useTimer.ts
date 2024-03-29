@@ -10,6 +10,7 @@ export function useTimer(active: boolean, interval: number) {
 
     useEffect(() => {
         if (active) {
+            // @ts-ignore
             timerRef.current = setInterval(() => {
                 nextStep();
             }, interval);
